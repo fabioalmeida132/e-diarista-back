@@ -1,12 +1,15 @@
 package br.com.ediarista.web.controllers;
 
 import br.com.ediarista.core.enums.Icone;
-import br.com.ediarista.core.models.Servico;
 import br.com.ediarista.core.repositories.ServicoRepository;
+import br.com.ediarista.web.dtos.ServicoForm;
+import br.com.ediarista.web.mappers.WebServicoMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+
+import javax.validation.Valid;
 
 @Controller
 @RequestMapping("/admin/servicos")
@@ -14,6 +17,9 @@ public class ServicoController {
 
     @Autowired
     private ServicoRepository repository;
+
+    @Autowired
+    private WebServicoMapper mapper;
 
     @GetMapping
     public ModelAndView buscarTodos(){
@@ -28,12 +34,13 @@ public class ServicoController {
     public ModelAndView cadastrar() {
         var modelAndView = new ModelAndView("admin/servico/form");
 
-        modelAndView.addObject("servico", new Servico());
+        modelAndView.addObject("form", new ServicoForm());
         return modelAndView;
     }
 
     @PostMapping("/cadastrar")
-    public String cadastrar(Servico servico) {
+    public String cadastrar(@Valid ServicoForm form) {
+        var servico = mapper.toModel(form);
         repository.save(servico);
         return "redirect:/admin/servicos";
     }
@@ -41,12 +48,18 @@ public class ServicoController {
     @GetMapping("/{id}/editar")
     public ModelAndView editar(@PathVariable Long id){
         var modelAndView = new ModelAndView("admin/servico/form");
-        modelAndView.addObject("servico", repository.getById(id));
+
+        var servico = repository.getById(id);
+        var form = mapper.toForm(servico);
+        modelAndView.addObject("form", form);
         return modelAndView;
     }
 
     @PostMapping("/{id}/editar")
-    public String editar(@PathVariable Long id, Servico servico){
+    public String editar(@PathVariable Long id, @Valid ServicoForm form){
+        var servico = mapper.toModel(form);
+        servico.setId(id);
+
         repository.save(servico);
         return "redirect:/admin/servicos";
     }
